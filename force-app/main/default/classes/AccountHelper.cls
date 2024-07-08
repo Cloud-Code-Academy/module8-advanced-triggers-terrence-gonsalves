@@ -18,10 +18,12 @@ Methods:
     - Note: You'll likely need to adjust the method signature to accept the necessary parameters.
 
 - `setRating`: 
-    - Purpose: Evaluate certain conditions on the Account and assign a rating based on that evaluation. You'll need to define the method's signature and implement its logic.
+    - Purpose: Evaluate certain conditions on the Account and assign a rating based on that evaluation. You'll need to define the method's 
+      signature and implement its logic.
 
 - `defaultContact`: 
-    - Purpose: Create a default contact related to the Account after the Account is inserted. You'll need to define the method's signature and implement its logic.
+    - Purpose: Create a default contact related to the Account after the Account is inserted. You'll need to define the method's signature and 
+      implement its logic.
 
 Remember:
 Always ensure that your helper methods are bulk-safe to handle multiple records efficiently. 
