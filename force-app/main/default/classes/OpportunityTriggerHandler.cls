@@ -19,6 +19,7 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler {
 
     public override void beforeDelete() {
         oppHelper.validateCloseOpportunity(oldOpp);
+        oppHelper.deleteCloseWonOpportunity(oldOpp);
     }
 
     public override void afterInsert() {
@@ -26,8 +27,8 @@ public with sharing class OpportunityTriggerHandler extends TriggerHandler {
     }
 
     public override void beforeUpdate() {
-        oppHelper.updateDescriptionFromStage(newOpp, oldOppMap);
-        oppHelper.amountValidation(newOpp);
+        oppHelper.beforeUpdateValidations(newOpp, oldOppMap);
+        oppHelper.setPrimaryContact(newOpp);
     }
 
     public override void afterDelete() {

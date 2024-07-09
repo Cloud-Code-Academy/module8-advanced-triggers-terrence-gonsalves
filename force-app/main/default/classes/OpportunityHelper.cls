@@ -25,9 +25,42 @@ Methods:
     - Purpose: Validates that the Type field is not empty and if it is set the Type to 'New Customer'.
 
 - validateCloseOpportunity(List<Opportunity> oldOpp):
+    - Purpose: Displays and error when an attempt has been made on a closed Opportunity.
+
+- beforeUpdateValidations(List<Opportunity> newOpp):
+    - Purpose: When an opportunity is updated validate that the amount is greater than 5000 and also check if the StageName is not null and has 
+      been updated
+
+- deleteCloseWonOpportunity(List<Opportunity> oldOpp):
+    - Purpose: When an opportunity is deleted prevent the deletion of a closed won opportunity if the account industry is 'Banking'.
+
+- setPrimaryContact(List<Opportunity> newOpp):
+    - Purpose: When an opportunity is updated set the primary contact on the opportunity to the contact with the title of 'CEO'.
 */
 public with sharing class OpportunityHelper { 
     public class CustomOppException extends Exception {}
+
+    public void beforeUpdateValidations(List<Opportunity> newOpp, Map<id, Opportunity> oldOppMap) {
+        for (Opportunity opp : newOpp) {
+            if (opp.Amount < 5000) {
+                opp.addError('Opportunity amount must be greater than 5000');
+            } else if (opp.StageName != null && opp.StageName != oldOppMap.get(opp.Id).StageName) { 
+                opp.Description += '\n Stage Change:' + opp.StageName + ':' + DateTime.now().format();
+            } 
+        }
+    }    
+
+    public void deleteCloseWonOpportunity(List<Opportunity> oldOpp) {
+        Map<Id, Account> accounts = new Map<Id, Account>([SELECT Id, Industry FROM Account WHERE Id IN (SELECT AccountId FROM Opportunity WHERE Id IN :oldOpp)]);
+
+        for (Opportunity opp : oldOpp) {
+            if (opp.StageName == 'Closed Won') {
+                if (accounts.get(opp.AccountId).Industry == 'Banking') {
+                    opp.addError('Cannot delete closed opportunity');
+                }
+            }
+        }
+    }
 
     public void setType(List<Opportunity> newOpp) {   
         Opportunity opp = newOpp[0];
@@ -37,10 +70,29 @@ public with sharing class OpportunityHelper {
         }
     }
 
-    public void amountValidation(List<Opportunity> newOpp) {
-        for(Opportunity opp : newOpp){
-            if(opp.Amount < 5000){
-                opp.addError('Opportunity amount must be greater than 5000');
+    public void setPrimaryContact(List<Opportunity> newOpp) {
+
+        //Get contacts related to the opportunity account
+        Set<Id> accountIds = new Set<Id>();
+
+        for (Opportunity opp : newOpp) {
+            accountIds.add(opp.AccountId);
+        }
+        
+        Map<Id, Contact> contacts = new Map<Id, Contact>([SELECT Id, FirstName, AccountId FROM Contact WHERE AccountId IN :accountIds AND Title = 'CEO' ORDER BY FirstName ASC]);
+        Map<Id, Contact> accountIdToContact = new Map<Id, Contact>();
+
+        for (Contact cont : contacts.values()) {
+            if (!accountIdToContact.containsKey(cont.AccountId)) {
+                accountIdToContact.put(cont.AccountId, cont);
+            }
+        }
+
+        for (Opportunity opp : newOpp) {
+            if (opp.Primary_Contact__c == null) {
+                if (accountIdToContact.containsKey(opp.AccountId)){
+                    opp.Primary_Contact__c = accountIdToContact.get(opp.AccountId).Id;
+                }
             }
         }
     }
@@ -68,15 +120,7 @@ public with sharing class OpportunityHelper {
             newTasks.add(tsk);
         }
 
-        try {
-            if (!newTasks.isEmpty()) {
-                insert newTasks;
-            } else {
-                throw new CustomOppException('No new tasks to insert!');
-            }
-        } catch (DmlException e) {
-            System.debug('There has been error with the insert operation: ' + e.getMessage());
-        }
+        insert newTasks;
     }
 
     public void updateDescriptionFromStage(List<Opportunity> newOpps, Map<Id, Opportunity> oldOppMap) {
@@ -86,11 +130,7 @@ public with sharing class OpportunityHelper {
             }           
         }
 
-        try {
-            update newOpps;
-        } catch (DmlException e) {
-            System.debug('There has been error with the update operation: ' + e.getMessage());
-        }
+        update newOpps;
     }
 
     public void assignPrimaryContact(Map<Id,Opportunity> oppNewMap) {        
@@ -147,10 +187,6 @@ public with sharing class OpportunityHelper {
             mails.add(mail);
         }        
         
-        try {
-            Messaging.sendEmail(mails);
-        } catch (Exception e){
-            System.debug('Exception: ' + e.getMessage());
-        }
+        Messaging.sendEmail(mails);
     }
 }
