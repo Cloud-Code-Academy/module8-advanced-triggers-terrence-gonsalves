@@ -18,29 +18,73 @@ Methods:
     - Note: You'll likely need to adjust the method signature to accept the necessary parameters.
 
 - `setRating`: 
-    - Purpose: Evaluate certain conditions on the Account and assign a rating based on that evaluation. You'll need to define the method's signature and implement its logic.
+    - Purpose: Evaluate certain conditions on the Account and assign a rating based on that evaluation. You'll need to define the method's 
+      signature and implement its logic.
 
 - `defaultContact`: 
-    - Purpose: Create a default contact related to the Account after the Account is inserted. You'll need to define the method's signature and implement its logic.
+    - Purpose: Create a default contact related to the Account after the Account is inserted. You'll need to define the method's signature and 
+      implement its logic.
 
 Remember:
 Always ensure that your helper methods are bulk-safe to handle multiple records efficiently. 
 */
 public with sharing class AccountHelper {
     
-    public void setTypeProspect(SObject objects){
-
+    public void setTypeProspect(List<Account> accounts) {
+        for (Account acc : accounts) {
+            if (acc.Type == null) {
+                acc.Type = 'Prospect';
+            }
+        }
     }
 
-    void addressCopy(){
+    public void addressCopy(List<Account> accounts) {
+        for (Account acc : accounts) {
+            if (acc.ShippingStreet != null) {
+                acc.BillingStreet = acc.ShippingStreet;
+            }
 
+            if (acc.ShippingCity != null) {
+                acc.BillingCity = acc.ShippingCity;
+            }
+
+            if (acc.ShippingPostalCode != null) {
+                acc.BillingPostalCode = acc.ShippingPostalCode;
+            }
+
+            if (acc.ShippingState != null) {
+                acc.BillingState = acc.ShippingState;
+            }
+
+            if (acc.ShippingCountry != null) {
+                acc.BillingCountry = acc.ShippingCountry;
+            }
+        } 
     }
 
-    //[public | private ] [static] data_type setRating (input parameters) {
-    //  The body of the method
-    //}
+    public void setRating(List<Account> accounts) {
+        for (Account acc : accounts) {
+            if (acc.Phone != null && acc.Website != null && acc.Fax != null) {
+                acc.Rating = 'Hot';
+            }
+        }
+    }
 
-    //[public | private ] [static] data_type defaultContact (input parameters) {
-    //  The body of the method
-    //}
+    public void defaultContact(List<Account> accounts) {
+        List<Contact> contacts = new List<Contact>(); 
+          
+        for (Account acc : accounts){
+            Contact con = new Contact();
+            con.LastName = 'DefaultContact';
+            con.Email = 'default@email.com';
+            con.AccountId = acc.Id;
+            contacts.add(con);
+        }
+
+        try {
+            insert contacts;
+        } catch (DmlException e) {
+            System.debug('There has been error with the insert operation: ' + e.getMessage());
+        }
+    }
 }

@@ -90,7 +90,7 @@ public with sharing class TriggerBestPracticeTest {
     * When an account is inserted copy the shipping address to the billing address.
     * Trigger should only fire on insert.
     */
-    @IsTest 
+    @IsTest
     static void testAccountTrigger_addressCopy() {
         // Prepare the test data
         List<Account> accountsToInsert = new List<Account>();
