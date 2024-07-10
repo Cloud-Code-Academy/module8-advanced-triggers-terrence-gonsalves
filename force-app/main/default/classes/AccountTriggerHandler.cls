@@ -27,7 +27,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler {
         * When an account is inserted copy the shipping address to the billing address.
         * Trigger should only fire on insert.
         */
-        accHelper.addressCopy(newAcct); /***** This test does not pass nor does the original code - it all fails with the same message *****/
+        accHelper.addressCopy(newAcct); 
 
         /*
         * Account Trigger
